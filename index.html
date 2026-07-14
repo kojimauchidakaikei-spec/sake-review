@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#7b1e3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="酒ログ">
+  <title>酒ログ v1.2</title>
+  <style>
+    :root{
+      --bg:#f7f3ee;--card:#fff;--ink:#2c2522;--muted:#7b706b;
+      --accent:#7b1e3a;--accent2:#a64a67;--line:#e6ddd5;--soft:#f1e7ea;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif;background:var(--bg);color:var(--ink)}
+    header{position:sticky;top:0;z-index:20;background:rgba(247,243,238,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+    .top,.wrap{max-width:760px;margin:auto}
+    .top{padding:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .wrap{padding:14px 14px calc(100px + env(safe-area-inset-bottom))}
+    h1{font-size:22px;margin:0}.sub{font-size:12px;color:var(--muted)}
+    button{border:0;border-radius:12px;padding:11px 14px;font-weight:700;font-size:14px;cursor:pointer}
+    .primary{background:var(--accent);color:#fff}.secondary{background:#eee5df;color:var(--ink)}
+    .danger{background:#f4dfe3;color:#8a2230}
+    .search{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;font-size:16px}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+    .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+    .stat b{display:block;font-size:21px;color:var(--accent)}
+    .toolbar,.filters{display:flex;gap:8px;overflow:auto;padding:2px 0 10px}
+    .toolbar button,.filters button{white-space:nowrap}
+    .active{background:var(--accent)!important;color:white!important}
+    .cards{display:grid;gap:12px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 2px 10px rgba(60,30,20,.04)}
+    .photos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    .photo{width:100%;aspect-ratio:1/1;object-fit:cover;background:#eee5df;border-radius:14px}
+    .photo.one{grid-column:1/-1;aspect-ratio:16/10}
+    .name{font-size:19px;font-weight:800}.brewery{font-size:13px;color:var(--muted);margin-top:2px}
+    .stars{color:#d39a22;letter-spacing:1px;margin-top:5px}
+    .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+    .tag{font-size:12px;background:var(--soft);color:var(--accent);padding:5px 8px;border-radius:999px}
+    .memo{font-size:14px;line-height:1.55;margin:10px 0 0;white-space:pre-wrap}
+    .date{font-size:12px;color:var(--muted);margin-top:10px}
+    .empty{text-align:center;color:var(--muted);padding:48px 20px}
+    .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;font-size:32px;box-shadow:0 8px 24px rgba(123,30,58,.3)}
+    dialog{width:min(720px,calc(100% - 16px));max-height:94vh;border:0;border-radius:22px;padding:0;background:var(--bg)}
+    dialog::backdrop{background:rgba(30,20,20,.55)}
+    .modal{padding:16px}.section{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px;margin:12px 0}
+    .section h3{margin:0 0 10px;font-size:16px}
+    label{display:block;font-size:13px;font-weight:700;color:#514944;margin:10px 0}
+    input,select,textarea{width:100%;margin-top:5px;padding:12px;border:1px solid var(--line);border-radius:12px;background:white;font:inherit}
+    textarea{min-height:100px;resize:vertical}
+    .photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .preview{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;background:#eee5df;display:none;margin-top:8px}
+    .ranges{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .rangebox{background:#faf8f6;border:1px solid var(--line);border-radius:13px;padding:10px}
+    input[type=range]{padding:0}
+    .check{display:flex;align-items:center;gap:10px;background:#faf8f6;border:1px solid var(--line);border-radius:13px;padding:11px}
+    .check input{width:auto;margin:0}
+    .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+    .rank{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px}
+    .rank h2{font-size:16px;margin:0 0 8px}
+    .rank ol{margin:0;padding-left:24px}.rank li{padding:5px 0}
+    .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99;display:none;align-items:center;justify-content:center;padding:16px}
+    .lightbox img{max-width:100%;max-height:100%;object-fit:contain}
+    @media(max-width:520px){.ranges,.photo-grid{grid-template-columns:1fr}.photos{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div><h1>🍶 酒ログ <small style="font-size:12px;color:#7b706b">v1.2</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
+    <button id="backupBtn" class="secondary">保存</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <input id="search" class="search" placeholder="銘柄・酒蔵・店・感想を検索">
+  <div class="stats">
+    <div class="stat"><b id="count">0</b><span>飲んだ本数</span></div>
+    <div class="stat"><b id="avg">-</b><span>平均評価</span></div>
+    <div class="stat"><b id="favoriteCount">0</b><span>また飲みたい</span></div>
+  </div>
+
+  <div class="filters">
+    <button class="secondary active" data-filter="all">すべて</button>
+    <button class="secondary" data-filter="favorite">また飲みたい</button>
+    <button class="secondary" data-filter="fruity4">フルーティー4以上</button>
+    <button class="secondary" data-filter="sweet4">甘さ4以上</button>
+  </div>
+
+  <div class="toolbar">
+    <button class="secondary active" data-sort="new">新しい順</button>
+    <button class="secondary" data-sort="rating">総合順</button>
+    <button class="secondary" data-sort="fruity">フルーティー順</button>
+    <button class="secondary" data-sort="sweet">甘さ順</button>
+    <button class="secondary" id="restoreBtn">復元</button>
+    <input type="file" id="restoreFile" accept=".json" hidden>
+  </div>
+
+  <section id="rankings"></section>
+  <section id="cards" class="cards"></section>
+</main>
+
+<button id="addBtn" class="fab" aria-label="追加">＋</button>
+
+<dialog id="editor">
+  <form id="form" class="modal">
+    <h2 id="formTitle">日本酒を記録</h2>
+    <input type="hidden" id="editId">
+
+    <div class="section">
+      <h3>① 表ラベル写真</h3>
+      <input id="frontPhoto" type="file" accept="image/*">
+      <img id="frontPreview" class="preview" alt="表ラベル写真">
+    </div>
+
+    <div class="section">
+      <h3>② 裏ラベル写真</h3>
+      <input id="backPhoto" type="file" accept="image/*">
+      <img id="backPreview" class="preview" alt="裏ラベル写真">
+    </div>
+
+    <div class="section">
+      <h3>③ 評価</h3>
+      <label>総合評価
+        <select id="rating">
+          <option value="5">★★★★★ かなり好き</option>
+          <option value="4">★★★★☆ 好き</option>
+          <option value="3" selected>★★★☆☆ 普通</option>
+          <option value="2">★★☆☆☆ あまり好みではない</option>
+          <option value="1">★☆☆☆☆ 苦手</option>
+        </select>
+      </label>
+      <div class="ranges">
+        <label class="rangebox">甘さ：<span id="sweetVal">3</span>/5
+          <input id="sweet" type="range" min="1" max="5" value="3">
+        </label>
+        <label class="rangebox">フルーティー：<span id="fruityVal">3</span>/5
+          <input id="fruity" type="range" min="1" max="5" value="3">
+        </label>
+        <label class="rangebox">香り：<span id="aromaVal">3</span>/5
+          <input id="aroma" type="range" min="1" max="5" value="3">
+        </label>
+        <label class="rangebox">キレ：<span id="dryVal">3</span>/5
+          <input id="dry" type="range" min="1" max="5" value="3">
+        </label>
+      </div>
+      <label class="check"><input id="again" type="checkbox"> また飲みたい</label>
+    </div>
+
+    <div class="section">
+      <h3>④ 詳細</h3>
+      <label>銘柄名 *
+        <input id="name" required placeholder="例：奥">
+      </label>
+      <label>酒蔵
+        <input id="brewery" placeholder="例：山﨑合資会社">
+      </label>
+      <label>地域・都道府県
+        <input id="region" placeholder="例：愛知県">
+      </label>
+      <label>種類
+        <select id="type">
+          <option>不明</option><option>純米</option><option>純米吟醸</option><option>純米大吟醸</option>
+          <option>吟醸</option><option>大吟醸</option><option>本醸造</option><option>生酒</option>
+          <option>にごり</option><option>スパークリング</option><option>その他</option>
+        </select>
+      </label>
+      <label>飲んだ店
+        <input id="place" placeholder="例：居酒屋〇〇">
+      </label>
+      <label>飲んだ日
+        <input id="date" type="date">
+      </label>
+    </div>
+
+    <div class="section">
+      <h3>⑤ 感想</h3>
+      <textarea id="memo" placeholder="例：甘めで桃っぽい。後味は軽くて飲みやすい。"></textarea>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="deleteBtn" class="danger" style="display:none">削除</button>
+      <button type="button" id="cancelBtn" class="secondary">キャンセル</button>
+      <button type="submit" class="primary">登録する</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="lightbox" class="lightbox"><img id="lightboxImg" alt=""></div>
+
+<script>
+const KEY='sake_reviews_v1';
+let items=JSON.parse(localStorage.getItem(KEY)||'[]');
+let sortMode='new', filterMode='all';
+let frontData='', backData='';
+
+const $=id=>document.getElementById(id);
+const save=()=>localStorage.setItem(KEY,JSON.stringify(items));
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const stars=n=>'★'.repeat(Number(n)||0)+'☆'.repeat(5-(Number(n)||0));
+
+// 旧データを壊さず移行
+items=items.map(x=>({
+  ...x,
+  frontPhoto:x.frontPhoto||x.photo||'',
+  backPhoto:x.backPhoto||'',
+  region:x.region||'',
+  again:!!x.again
+}));
+save();
+
+function filtered(){
+  const q=$('search').value.trim().toLowerCase();
+  let list=items.filter(x=>[x.name,x.brewery,x.region,x.place,x.memo,x.type].join(' ').toLowerCase().includes(q));
+  if(filterMode==='favorite') list=list.filter(x=>x.again);
+  if(filterMode==='fruity4') list=list.filter(x=>Number(x.fruity)>=4);
+  if(filterMode==='sweet4') list=list.filter(x=>Number(x.sweet)>=4);
+  if(sortMode==='new') list.sort((a,b)=>(b.date||'').localeCompare(a.date||'') || (b.created||0)-(a.created||0));
+  if(sortMode==='rating') list.sort((a,b)=>b.rating-a.rating);
+  if(sortMode==='fruity') list.sort((a,b)=>b.fruity-a.fruity);
+  if(sortMode==='sweet') list.sort((a,b)=>b.sweet-a.sweet);
+  return list;
+}
+
+function ranking(title,key){
+  const list=[...items].sort((a,b)=>Number(b[key]||0)-Number(a[key]||0)).slice(0,3);
+  if(!list.length)return '';
+  return `<div class="rank"><h2>${title}</h2><ol>${list.map(x=>`<li><b>${esc(x.name)}</b> — ${x[key]}/5</li>`).join('')}</ol></div>`;
+}
+
+function render(){
+  const list=filtered();
+  $('count').textContent=items.length;
+  $('avg').textContent=items.length
+    ?(items.reduce((s,x)=>s+Number(x.rating||0),0)/items.length).toFixed(1)
+    :'-';
+  $('favoriteCount').textContent=items.filter(x=>x.again).length;
+
+  $('rankings').innerHTML=
+    ranking('🏆 総合ランキング','rating')+
+    ranking('🍑 フルーティーランキング','fruity');
+
+  $('cards').innerHTML=list.length?list.map(x=>{
+    const photos=[x.frontPhoto,x.backPhoto].filter(Boolean);
+    const photoHtml=photos.length
+      ?`<div class="photos">${photos.map((p,i)=>`<img class="photo ${photos.length===1?'one':''}" src="${p}" onclick="event.stopPropagation();openPhoto('${x.id}',${i})">`).join('')}</div>`
+      :'';
+
+    return `<article class="card" onclick="editItem('${x.id}')">
+      ${photoHtml}
+      <div class="name">${esc(x.name)}</div>
+      <div class="brewery">${esc([x.brewery,x.region].filter(Boolean).join('・')||'酒蔵・地域未登録')}</div>
+      <div class="stars">${stars(x.rating)}</div>
+      <div class="tags">
+        <span class="tag">甘さ ${x.sweet}/5</span>
+        <span class="tag">フルーティー ${x.fruity}/5</span>
+        <span class="tag">香り ${x.aroma}/5</span>
+        <span class="tag">キレ ${x.dry}/5</span>
+        ${x.type&&x.type!=='不明'?`<span class="tag">${esc(x.type)}</span>`:''}
+        ${x.again?`<span class="tag">★ また飲みたい</span>`:''}
+      </div>
+      ${x.memo?`<p class="memo">${esc(x.memo)}</p>`:''}
+      <div class="date">${esc(x.date||'日付未登録')}${x.place?' ・ '+esc(x.place):''}</div>
+    </article>`;
+  }).join('')
+  :`<div class="empty">まだレビューがありません。<br>右下の「＋」から登録できます。</div>`;
+}
+
+function resetForm(){
+  $('form').reset();
+  $('editId').value='';
+  $('date').value=new Date().toISOString().slice(0,10);
+
+  frontData='';
+  backData='';
+
+  ['frontPreview','backPreview'].forEach(id=>{
+    $(id).src='';
+    $(id).style.display='none';
+  });
+
+  $('deleteBtn').style.display='none';
+  $('formTitle').textContent='日本酒を記録';
+
+  ['sweet','fruity','aroma','dry'].forEach(id=>{
+    $(id+'Val').textContent=$(id).value;
+  });
+}
+
+function fillPreview(id,data){
+  $(id).src=data||'';
+  $(id).style.display=data?'block':'none';
+}
+
+window.editItem=id=>{
+  const x=items.find(i=>i.id===id);
+  if(!x)return;
+
+  $('editId').value=x.id;
+  $('name').value=x.name||'';
+  $('brewery').value=x.brewery||'';
+  $('region').value=x.region||'';
+  $('date').value=x.date||'';
+  $('rating').value=x.rating||3;
+  $('sweet').value=x.sweet||3;
+  $('fruity').value=x.fruity||3;
+  $('aroma').value=x.aroma||3;
+  $('dry').value=x.dry||3;
+  $('type').value=x.type||'不明';
+  $('place').value=x.place||'';
+  $('memo').value=x.memo||'';
+  $('again').checked=!!x.again;
+
+  frontData=x.frontPhoto||'';
+  backData=x.backPhoto||'';
+
+  fillPreview('frontPreview',frontData);
+  fillPreview('backPreview',backData);
+
+  ['sweet','fruity','aroma','dry'].forEach(k=>{
+    $(k+'Val').textContent=$(k).value;
+  });
+
+  $('deleteBtn').style.display='inline-block';
+  $('formTitle').textContent='レビューを編集';
+  $('editor').showModal();
+};
+
+function bindPhoto(inputId,previewId,setter){
+  $(inputId).addEventListener('change',e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+
+    const img=new Image();
+    const r=new FileReader();
+
+    r.onload=()=>{
+      img.onload=()=>{
+        const max=1000;
+        const scale=Math.min(1,max/Math.max(img.width,img.height));
+        const c=document.createElement('canvas');
+
+        c.width=Math.round(img.width*scale);
+        c.height=Math.round(img.height*scale);
+
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+
+        const data=c.toDataURL('image/jpeg',.72);
+        setter(data);
+        fillPreview(previewId,data);
+      };
+
+      img.src=r.result;
+    };
+
+    r.readAsDataURL(file);
+  });
+}
+
+bindPhoto('frontPhoto','frontPreview',d=>frontData=d);
+bindPhoto('backPhoto','backPreview',d=>backData=d);
+
+$('form').addEventListener('submit',e=>{
+  e.preventDefault();
+
+  const id=$('editId').value||crypto.randomUUID();
+  const old=items.find(x=>x.id===id);
+
+  const data={
+    id,
+    name:$('name').value.trim(),
+    brewery:$('brewery').value.trim(),
+    region:$('region').value.trim(),
+    date:$('date').value,
+    rating:+$('rating').value,
+    sweet:+$('sweet').value,
+    fruity:+$('fruity').value,
+    aroma:+$('aroma').value,
+    dry:+$('dry').value,
+    type:$('type').value,
+    place:$('place').value.trim(),
+    memo:$('memo').value.trim(),
+    again:$('again').checked,
+    frontPhoto:frontData,
+    backPhoto:backData,
+    created:old?.created||Date.now()
+  };
+
+  items=old
+    ?items.map(x=>x.id===id?data:x)
+    :[data,...items];
+
+  save();
+  render();
+  $('editor').close();
+});
+
+['sweet','fruity','aroma','dry'].forEach(id=>{
+  $(id).addEventListener('input',()=>{
+    $(id+'Val').textContent=$(id).value;
+  });
+});
+
+$('addBtn').onclick=()=>{
+  resetForm();
+  $('editor').showModal();
+};
+
+$('cancelBtn').onclick=()=>{
+  $('editor').close();
+};
+
+$('deleteBtn').onclick=()=>{
+  if(confirm('このレビューを削除しますか？')){
+    items=items.filter(x=>x.id!==$('editId').value);
+    save();
+    render();
+    $('editor').close();
+  }
+};
+
+$('search').addEventListener('input',render);
+
+document.querySelectorAll('[data-sort]').forEach(b=>{
+  b.onclick=()=>{
+    sortMode=b.dataset.sort;
+    document.querySelectorAll('[data-sort]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    render();
+  };
+});
+
+document.querySelectorAll('[data-filter]').forEach(b=>{
+  b.onclick=()=>{
+    filterMode=b.dataset.filter;
+    document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    render();
+  };
+});
+
+$('backupBtn').onclick=()=>{
+  const blob=new Blob(
+    [JSON.stringify(items,null,2)],
+    {type:'application/json'}
+  );
+
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='sake-reviews-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+
+  URL.revokeObjectURL(a.href);
+};
+
+$('restoreBtn').onclick=()=>{
+  $('restoreFile').click();
+};
+
+$('restoreFile').onchange=async e=>{
+  try{
+    const data=JSON.parse(await e.target.files[0].text());
+
+    if(!Array.isArray(data))throw new Error();
+
+    if(confirm(`${data.length}件のデータで現在の記録を置き換えますか？`)){
+      items=data;
+      save();
+      location.reload();
+    }
+  }catch{
+    alert('読み込めないファイルです。');
+  }
+};
+
+window.openPhoto=(id,index)=>{
+  const x=items.find(i=>i.id===id);
+  const arr=[x?.frontPhoto,x?.backPhoto].filter(Boolean);
+
+  if(!arr[index])return;
+
+  $('lightboxImg').src=arr[index];
+  $('lightbox').style.display='flex';
+};
+
+$('lightbox').onclick=()=>{
+  $('lightbox').style.display='none';
+  $('lightboxImg').src='';
+};
+
+render();
+</script>
+</body>
+</html>
