@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#7b1e3a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="酒ログ">
-  <title>酒ログ v1.2</title>
+  <title>酒ログ v1.3</title>
   <style>
     :root{
       --bg:#f7f3ee;--card:#fff;--ink:#2c2522;--muted:#7b706b;
@@ -68,7 +68,7 @@
 <body>
 <header>
   <div class="top">
-    <div><h1>🍶 酒ログ <small style="font-size:12px;color:#7b706b">v1.2</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
+    <div><h1>🍶 酒ログ <small style="font-size:12px;color:#7b706b">v1.3</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
     <button id="backupBtn" class="secondary">保存</button>
   </div>
 </header>
@@ -78,12 +78,12 @@
   <div class="stats">
     <div class="stat"><b id="count">0</b><span>飲んだ本数</span></div>
     <div class="stat"><b id="avg">-</b><span>平均評価</span></div>
-    <div class="stat"><b id="favoriteCount">0</b><span>また飲みたい</span></div>
+    <div class="stat"><b id="againAvg">-</b><span>また飲みたい度</span></div>
   </div>
 
   <div class="filters">
     <button class="secondary active" data-filter="all">すべて</button>
-    <button class="secondary" data-filter="favorite">また飲みたい</button>
+    <button class="secondary" data-filter="again4">また飲みたい度4以上</button>
     <button class="secondary" data-filter="fruity4">フルーティー4以上</button>
     <button class="secondary" data-filter="sweet4">甘さ4以上</button>
   </div>
@@ -91,6 +91,7 @@
   <div class="toolbar">
     <button class="secondary active" data-sort="new">新しい順</button>
     <button class="secondary" data-sort="rating">総合順</button>
+    <button class="secondary" data-sort="again">また飲みたい順</button>
     <button class="secondary" data-sort="fruity">フルーティー順</button>
     <button class="secondary" data-sort="sweet">甘さ順</button>
     <button class="secondary" id="restoreBtn">復元</button>
@@ -145,7 +146,15 @@
           <input id="dry" type="range" min="1" max="5" value="3">
         </label>
       </div>
-      <label class="check"><input id="again" type="checkbox"> また飲みたい</label>
+      <label>また飲みたい度
+        <select id="againLevel">
+          <option value="5">★★★★★ 見つけたらまた飲みたい</option>
+          <option value="4">★★★★☆ また飲みたい</option>
+          <option value="3" selected>★★★☆☆ あれば飲む</option>
+          <option value="2">★★☆☆☆ たぶん選ばない</option>
+          <option value="1">★☆☆☆☆ もう飲まなくていい</option>
+        </select>
+      </label>
     </div>
 
     <div class="section">
@@ -206,18 +215,19 @@ items=items.map(x=>({
   frontPhoto:x.frontPhoto||x.photo||'',
   backPhoto:x.backPhoto||'',
   region:x.region||'',
-  again:!!x.again
+  againLevel:Number(x.againLevel)||(x.again===true?5:3)
 }));
 save();
 
 function filtered(){
   const q=$('search').value.trim().toLowerCase();
   let list=items.filter(x=>[x.name,x.brewery,x.region,x.place,x.memo,x.type].join(' ').toLowerCase().includes(q));
-  if(filterMode==='favorite') list=list.filter(x=>x.again);
+  if(filterMode==='again4') list=list.filter(x=>Number(x.againLevel)>=4);
   if(filterMode==='fruity4') list=list.filter(x=>Number(x.fruity)>=4);
   if(filterMode==='sweet4') list=list.filter(x=>Number(x.sweet)>=4);
   if(sortMode==='new') list.sort((a,b)=>(b.date||'').localeCompare(a.date||'') || (b.created||0)-(a.created||0));
   if(sortMode==='rating') list.sort((a,b)=>b.rating-a.rating);
+  if(sortMode==='again') list.sort((a,b)=>b.againLevel-a.againLevel);
   if(sortMode==='fruity') list.sort((a,b)=>b.fruity-a.fruity);
   if(sortMode==='sweet') list.sort((a,b)=>b.sweet-a.sweet);
   return list;
@@ -232,21 +242,17 @@ function ranking(title,key){
 function render(){
   const list=filtered();
   $('count').textContent=items.length;
-  $('avg').textContent=items.length
-    ?(items.reduce((s,x)=>s+Number(x.rating||0),0)/items.length).toFixed(1)
-    :'-';
-  $('favoriteCount').textContent=items.filter(x=>x.again).length;
+  $('avg').textContent=items.length?(items.reduce((s,x)=>s+Number(x.rating||0),0)/items.length).toFixed(1):'-';
+  $('againAvg').textContent=items.length?(items.reduce((s,x)=>s+Number(x.againLevel||0),0)/items.length).toFixed(1):'-';
 
   $('rankings').innerHTML=
     ranking('🏆 総合ランキング','rating')+
+    ranking('🔁 また飲みたい度ランキング','againLevel')+
     ranking('🍑 フルーティーランキング','fruity');
 
   $('cards').innerHTML=list.length?list.map(x=>{
     const photos=[x.frontPhoto,x.backPhoto].filter(Boolean);
-    const photoHtml=photos.length
-      ?`<div class="photos">${photos.map((p,i)=>`<img class="photo ${photos.length===1?'one':''}" src="${p}" onclick="event.stopPropagation();openPhoto('${x.id}',${i})">`).join('')}</div>`
-      :'';
-
+    const photoHtml=photos.length?`<div class="photos">${photos.map((p,i)=>`<img class="photo ${photos.length===1?'one':''}" src="${p}" onclick="event.stopPropagation();openPhoto('${x.id}',${i})">`).join('')}</div>`:'';
     return `<article class="card" onclick="editItem('${x.id}')">
       ${photoHtml}
       <div class="name">${esc(x.name)}</div>
@@ -258,236 +264,100 @@ function render(){
         <span class="tag">香り ${x.aroma}/5</span>
         <span class="tag">キレ ${x.dry}/5</span>
         ${x.type&&x.type!=='不明'?`<span class="tag">${esc(x.type)}</span>`:''}
-        ${x.again?`<span class="tag">★ また飲みたい</span>`:''}
+        <span class="tag">また飲みたい ${x.againLevel}/5</span>
       </div>
       ${x.memo?`<p class="memo">${esc(x.memo)}</p>`:''}
       <div class="date">${esc(x.date||'日付未登録')}${x.place?' ・ '+esc(x.place):''}</div>
     </article>`;
-  }).join('')
-  :`<div class="empty">まだレビューがありません。<br>右下の「＋」から登録できます。</div>`;
+  }).join(''):`<div class="empty">まだレビューがありません。<br>右下の「＋」から登録できます。</div>`;
 }
 
 function resetForm(){
-  $('form').reset();
-  $('editId').value='';
-  $('date').value=new Date().toISOString().slice(0,10);
-
-  frontData='';
-  backData='';
-
-  ['frontPreview','backPreview'].forEach(id=>{
-    $(id).src='';
-    $(id).style.display='none';
-  });
-
-  $('deleteBtn').style.display='none';
-  $('formTitle').textContent='日本酒を記録';
-
-  ['sweet','fruity','aroma','dry'].forEach(id=>{
-    $(id+'Val').textContent=$(id).value;
-  });
+  $('form').reset(); $('editId').value=''; $('date').value=new Date().toISOString().slice(0,10);
+  frontData='';backData='';
+  ['frontPreview','backPreview'].forEach(id=>{$(id).src='';$(id).style.display='none';});
+  $('deleteBtn').style.display='none';$('formTitle').textContent='日本酒を記録';
+  ['sweet','fruity','aroma','dry'].forEach(id=>$(id+'Val').textContent=$(id).value);
 }
 
 function fillPreview(id,data){
-  $(id).src=data||'';
-  $(id).style.display=data?'block':'none';
+  $(id).src=data||'';$(id).style.display=data?'block':'none';
 }
 
 window.editItem=id=>{
-  const x=items.find(i=>i.id===id);
-  if(!x)return;
-
-  $('editId').value=x.id;
-  $('name').value=x.name||'';
-  $('brewery').value=x.brewery||'';
-  $('region').value=x.region||'';
-  $('date').value=x.date||'';
-  $('rating').value=x.rating||3;
-  $('sweet').value=x.sweet||3;
-  $('fruity').value=x.fruity||3;
-  $('aroma').value=x.aroma||3;
-  $('dry').value=x.dry||3;
-  $('type').value=x.type||'不明';
-  $('place').value=x.place||'';
-  $('memo').value=x.memo||'';
-  $('again').checked=!!x.again;
-
-  frontData=x.frontPhoto||'';
-  backData=x.backPhoto||'';
-
-  fillPreview('frontPreview',frontData);
-  fillPreview('backPreview',backData);
-
-  ['sweet','fruity','aroma','dry'].forEach(k=>{
-    $(k+'Val').textContent=$(k).value;
-  });
-
-  $('deleteBtn').style.display='inline-block';
-  $('formTitle').textContent='レビューを編集';
-  $('editor').showModal();
+  const x=items.find(i=>i.id===id);if(!x)return;
+  $('editId').value=x.id;$('name').value=x.name||'';$('brewery').value=x.brewery||'';
+  $('region').value=x.region||'';$('date').value=x.date||'';$('rating').value=x.rating||3;
+  $('sweet').value=x.sweet||3;$('fruity').value=x.fruity||3;$('aroma').value=x.aroma||3;$('dry').value=x.dry||3;
+  $('type').value=x.type||'不明';$('place').value=x.place||'';$('memo').value=x.memo||'';$('againLevel').value=x.againLevel||3;
+  frontData=x.frontPhoto||'';backData=x.backPhoto||'';
+  fillPreview('frontPreview',frontData);fillPreview('backPreview',backData);
+  ['sweet','fruity','aroma','dry'].forEach(k=>$(k+'Val').textContent=$(k).value);
+  $('deleteBtn').style.display='inline-block';$('formTitle').textContent='レビューを編集';$('editor').showModal();
 };
 
 function bindPhoto(inputId,previewId,setter){
   $(inputId).addEventListener('change',e=>{
-    const file=e.target.files[0];
-    if(!file)return;
-
-    const img=new Image();
-    const r=new FileReader();
-
-    r.onload=()=>{
-      img.onload=()=>{
-        const max=1000;
-        const scale=Math.min(1,max/Math.max(img.width,img.height));
-        const c=document.createElement('canvas');
-
-        c.width=Math.round(img.width*scale);
-        c.height=Math.round(img.height*scale);
-
-        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-
-        const data=c.toDataURL('image/jpeg',.72);
-        setter(data);
-        fillPreview(previewId,data);
-      };
-
-      img.src=r.result;
-    };
-
-    r.readAsDataURL(file);
+    const file=e.target.files[0];if(!file)return;
+    const img=new Image(),r=new FileReader();
+    r.onload=()=>{img.onload=()=>{
+      const max=1000,scale=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      const data=c.toDataURL('image/jpeg',.72);setter(data);fillPreview(previewId,data);
+    };img.src=r.result};r.readAsDataURL(file);
   });
 }
-
 bindPhoto('frontPhoto','frontPreview',d=>frontData=d);
 bindPhoto('backPhoto','backPreview',d=>backData=d);
 
 $('form').addEventListener('submit',e=>{
   e.preventDefault();
-
   const id=$('editId').value||crypto.randomUUID();
   const old=items.find(x=>x.id===id);
-
   const data={
-    id,
-    name:$('name').value.trim(),
-    brewery:$('brewery').value.trim(),
-    region:$('region').value.trim(),
-    date:$('date').value,
-    rating:+$('rating').value,
-    sweet:+$('sweet').value,
-    fruity:+$('fruity').value,
-    aroma:+$('aroma').value,
-    dry:+$('dry').value,
-    type:$('type').value,
-    place:$('place').value.trim(),
-    memo:$('memo').value.trim(),
-    again:$('again').checked,
-    frontPhoto:frontData,
-    backPhoto:backData,
+    id,name:$('name').value.trim(),brewery:$('brewery').value.trim(),region:$('region').value.trim(),
+    date:$('date').value,rating:+$('rating').value,sweet:+$('sweet').value,fruity:+$('fruity').value,
+    aroma:+$('aroma').value,dry:+$('dry').value,type:$('type').value,place:$('place').value.trim(),
+    memo:$('memo').value.trim(),againLevel:+$('againLevel').value,frontPhoto:frontData,backPhoto:backData,
     created:old?.created||Date.now()
   };
-
-  items=old
-    ?items.map(x=>x.id===id?data:x)
-    :[data,...items];
-
-  save();
-  render();
-  $('editor').close();
+  items=old?items.map(x=>x.id===id?data:x):[data,...items];
+  save();render();$('editor').close();
 });
 
-['sweet','fruity','aroma','dry'].forEach(id=>{
-  $(id).addEventListener('input',()=>{
-    $(id+'Val').textContent=$(id).value;
-  });
-});
-
-$('addBtn').onclick=()=>{
-  resetForm();
-  $('editor').showModal();
-};
-
-$('cancelBtn').onclick=()=>{
-  $('editor').close();
-};
-
-$('deleteBtn').onclick=()=>{
-  if(confirm('このレビューを削除しますか？')){
-    items=items.filter(x=>x.id!==$('editId').value);
-    save();
-    render();
-    $('editor').close();
-  }
-};
-
+['sweet','fruity','aroma','dry'].forEach(id=>$(id).addEventListener('input',()=>$(id+'Val').textContent=$(id).value));
+$('addBtn').onclick=()=>{resetForm();$('editor').showModal();};
+$('cancelBtn').onclick=()=>$('editor').close();
+$('deleteBtn').onclick=()=>{if(confirm('このレビューを削除しますか？')){items=items.filter(x=>x.id!==$('editId').value);save();render();$('editor').close();}};
 $('search').addEventListener('input',render);
 
-document.querySelectorAll('[data-sort]').forEach(b=>{
-  b.onclick=()=>{
-    sortMode=b.dataset.sort;
-    document.querySelectorAll('[data-sort]').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    render();
-  };
+document.querySelectorAll('[data-sort]').forEach(b=>b.onclick=()=>{
+  sortMode=b.dataset.sort;document.querySelectorAll('[data-sort]').forEach(x=>x.classList.remove('active'));b.classList.add('active');render();
 });
-
-document.querySelectorAll('[data-filter]').forEach(b=>{
-  b.onclick=()=>{
-    filterMode=b.dataset.filter;
-    document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    render();
-  };
+document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{
+  filterMode=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');render();
 });
 
 $('backupBtn').onclick=()=>{
-  const blob=new Blob(
-    [JSON.stringify(items,null,2)],
-    {type:'application/json'}
-  );
-
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='sake-reviews-'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
-
+  const blob=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sake-reviews-'+new Date().toISOString().slice(0,10)+'.json';a.click();
   URL.revokeObjectURL(a.href);
 };
-
-$('restoreBtn').onclick=()=>{
-  $('restoreFile').click();
-};
-
+$('restoreBtn').onclick=()=>$('restoreFile').click();
 $('restoreFile').onchange=async e=>{
   try{
     const data=JSON.parse(await e.target.files[0].text());
-
     if(!Array.isArray(data))throw new Error();
-
-    if(confirm(`${data.length}件のデータで現在の記録を置き換えますか？`)){
-      items=data;
-      save();
-      location.reload();
-    }
-  }catch{
-    alert('読み込めないファイルです。');
-  }
+    if(confirm(`${data.length}件のデータで現在の記録を置き換えますか？`)){items=data;save();location.reload();}
+  }catch{alert('読み込めないファイルです。');}
 };
 
 window.openPhoto=(id,index)=>{
-  const x=items.find(i=>i.id===id);
-  const arr=[x?.frontPhoto,x?.backPhoto].filter(Boolean);
-
-  if(!arr[index])return;
-
-  $('lightboxImg').src=arr[index];
-  $('lightbox').style.display='flex';
+  const x=items.find(i=>i.id===id);const arr=[x?.frontPhoto,x?.backPhoto].filter(Boolean);
+  if(!arr[index])return;$('lightboxImg').src=arr[index];$('lightbox').style.display='flex';
 };
-
-$('lightbox').onclick=()=>{
-  $('lightbox').style.display='none';
-  $('lightboxImg').src='';
-};
+$('lightbox').onclick=()=>{$('lightbox').style.display='none';$('lightboxImg').src='';};
 
 render();
 </script>
