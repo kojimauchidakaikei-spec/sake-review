@@ -6,21 +6,29 @@
   <meta name="theme-color" content="#7b1e3a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="酒ログ">
-  <title>酒ログ v1.4</title>
+  <title>酒ログ v1.6</title>
+  <meta name="app-version" content="1.6">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link rel="apple-touch-icon" href="icon-180.png?v=16">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=16">
+  <link rel="manifest" href="manifest.webmanifest?v=16">
+
   <style>
     :root{
-      --bg:#f7f3ee;--card:#fff;--ink:#2c2522;--muted:#7b706b;
-      --accent:#7b1e3a;--accent2:#a64a67;--line:#e6ddd5;--soft:#f1e7ea;
+      --bg:#f6f2e8;--card:#ffffff;--ink:#17263a;--muted:#697587;
+      --accent:#153f73;--accent2:#2f679f;--line:#d7dee8;--soft:#eaf1f8;--gold:#d49a19;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif;background:var(--bg);color:var(--ink)}
-    header{position:sticky;top:0;z-index:20;background:rgba(247,243,238,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+    header{position:sticky;top:0;z-index:20;background:rgba(245,241,232,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
     .top,.wrap{max-width:760px;margin:auto}
     .top{padding:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
     .wrap{padding:14px 14px calc(100px + env(safe-area-inset-bottom))}
     h1{font-size:22px;margin:0}.sub{font-size:12px;color:var(--muted)}
     button{border:0;border-radius:12px;padding:11px 14px;font-weight:700;font-size:14px;cursor:pointer}
-    .primary{background:var(--accent);color:#fff}.secondary{background:#eee5df;color:var(--ink)}
+    .primary{background:var(--accent);color:#fff}.secondary{background:#e8edf3;color:var(--ink)}
     .danger{background:#f4dfe3;color:#8a2230}
     .search{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;font-size:16px}
     .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
@@ -32,16 +40,16 @@
     .cards{display:grid;gap:12px}
     .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 2px 10px rgba(60,30,20,.04)}
     .photos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-    .photo{width:100%;aspect-ratio:1/1;object-fit:cover;background:#eee5df;border-radius:14px}
+    .photo{width:100%;aspect-ratio:1/1;object-fit:cover;background:#e8edf3;border-radius:14px}
     .photo.one{grid-column:1/-1;aspect-ratio:16/10}
     .name{font-size:19px;font-weight:800}.brewery{font-size:13px;color:var(--muted);margin-top:2px}
-    .stars{color:#d39a22;letter-spacing:1px;margin-top:5px}
+    .stars{color:var(--gold);letter-spacing:1px;margin-top:5px}
     .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
     .tag{font-size:12px;background:var(--soft);color:var(--accent);padding:5px 8px;border-radius:999px}
     .memo{font-size:14px;line-height:1.55;margin:10px 0 0;white-space:pre-wrap}
     .date{font-size:12px;color:var(--muted);margin-top:10px}
     .empty{text-align:center;color:var(--muted);padding:48px 20px}
-    .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;font-size:32px;box-shadow:0 8px 24px rgba(123,30,58,.3)}
+    .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;font-size:32px;box-shadow:0 8px 24px rgba(23,58,103,.28)}
     dialog{width:min(720px,calc(100% - 16px));max-height:94vh;border:0;border-radius:22px;padding:0;background:var(--bg)}
     dialog::backdrop{background:rgba(30,20,20,.55)}
     .modal{padding:16px}.section{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px;margin:12px 0}
@@ -50,11 +58,11 @@
     input,select,textarea{width:100%;margin-top:5px;padding:12px;border:1px solid var(--line);border-radius:12px;background:white;font:inherit}
     textarea{min-height:100px;resize:vertical}
     .photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .preview{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;background:#eee5df;display:none;margin-top:8px}
+    .preview{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;background:#e8edf3;display:none;margin-top:8px}
     .ranges{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .rangebox{background:#faf8f6;border:1px solid var(--line);border-radius:13px;padding:10px}
+    .rangebox{background:#f8fafc;border:1px solid var(--line);border-radius:13px;padding:10px}
     input[type=range]{padding:0}
-    .check{display:flex;align-items:center;gap:10px;background:#faf8f6;border:1px solid var(--line);border-radius:13px;padding:11px}
+    .check{display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:13px;padding:11px}
     .check input{width:auto;margin:0}
     .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
     .rank{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px}
@@ -68,8 +76,8 @@
 <body>
 <header>
   <div class="top">
-    <div><h1>🍶 酒ログ <small style="font-size:12px;color:#7b706b">v1.4</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
-    <button id="backupBtn" class="secondary">保存</button>
+    <div><h1 style="display:flex;align-items:center;gap:8px"><img src="icon-180.png?v=16" alt="" style="width:34px;height:34px;border-radius:9px">酒ログ <small style="font-size:12px;color:#7b706b">v1.6</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
+    <div style="display:flex;gap:6px;background:#fff;border:1px solid var(--line);padding:4px;border-radius:14px"><button id="backupBtn" class="secondary" style="background:transparent;color:var(--accent)">保存</button><button id="restoreBtnTop" class="secondary" style="background:transparent;color:var(--accent);border-left:1px solid var(--line);border-radius:0 10px 10px 0">復元</button></div>
   </div>
 </header>
 
@@ -94,7 +102,6 @@
     <button class="secondary" data-sort="again">また飲みたい順</button>
     <button class="secondary" data-sort="fruity">フルーティー順</button>
     <button class="secondary" data-sort="sweet">甘さ順</button>
-    <button class="secondary" id="restoreBtn">復元</button>
     <input type="file" id="restoreFile" accept=".json" hidden>
   </div>
 
@@ -106,7 +113,7 @@
 
 <dialog id="editor">
   <form id="form" class="modal">
-    <h2 id="formTitle">日本酒を記録</h2>
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg);display:flex;justify-content:space-between;align-items:center;padding:2px 0 10px"><h2 id="formTitle" style="margin:0">日本酒を記録</h2><button type="button" id="closeTopBtn" class="secondary" aria-label="閉じる" style="font-size:24px;line-height:1;padding:8px 12px;background:#fff;color:var(--accent);border:1px solid var(--line);box-shadow:0 2px 8px rgba(20,45,75,.10)">×</button></div>
     <input type="hidden" id="editId">
 
     <div class="section">
@@ -126,16 +133,16 @@
       <div class="rangebox" style="margin-bottom:10px"><b>総合評価（自動計算）</b><div id="ratingPreview" class="stars">★★★☆☆（3.00）</div><div style="font-size:12px;color:var(--muted);margin-top:4px">甘さ・フルーティー・香り・キレ・また飲みたい度×2 の平均</div></div>
       <div class="ranges">
         <label class="rangebox">甘さ：<span id="sweetVal">3</span>/5
-          <input id="sweet" type="range" min="1" max="5" value="3">
+          <div style="display:grid;grid-template-columns:44px 1fr 44px;gap:8px;align-items:center;margin-top:8px"><button type="button" class="secondary stepBtn" style="font-size:22px;padding:6px 0;color:var(--accent);background:#fff;border:1px solid var(--line)" data-target="sweet" data-step="-1">−</button><input id="sweet" type="range" min="1" max="5" value="3"><button type="button" class="secondary stepBtn" style="font-size:22px;padding:6px 0;color:var(--accent);background:#fff;border:1px solid var(--line)" data-target="sweet" data-step="1">＋</button></div>
         </label>
         <label class="rangebox">フルーティー：<span id="fruityVal">3</span>/5
-          <input id="fruity" type="range" min="1" max="5" value="3">
+          <div style="display:grid;grid-template-columns:44px 1fr 44px;gap:8px;align-items:center;margin-top:8px"><button type="button" class="secondary stepBtn" style="font-size:22px;padding:6px 0;color:var(--accent);background:#fff;border:1px solid var(--line)" data-target="fruity" data-step="-1">−</button><input id="fruity" type="range" min="1" max="5" value="3"><button type="button" class="secondary stepBtn" style="font-size:22px;padding:6px 0;color:var(--accent);background:#fff;border:1px solid var(--line)" data-target="fruity" data-step="1">＋</button></div>
         </label>
         <label class="rangebox">香り：<span id="aromaVal">3</span>/5
-          <input id="aroma" type="range" min="1" max="5" value="3">
+          <div style="display:grid;grid-template-columns:44px 1fr 44px;gap:8px;align-items:center;margin-top:8px"><button type="button" class="secondary stepBtn" style="font-size:22px;padding:6px 0;color:var(--accent);background:#fff;border:1px solid var(--line)" data-target="aroma" data-step="-1">−</button><input id="aroma" type="range" min="1" max="5" value="3"><button type="button" class="secondary stepBtn" style="font-size:22px;padding:6px 0;color:var(--accent);background:#fff;border:1px solid var(--line)" data-target="aroma" data-step="1">＋</button></div>
         </label>
         <label class="rangebox">キレ：<span id="dryVal">3</span>/5
-          <input id="dry" type="range" min="1" max="5" value="3">
+          <div style="display:grid;grid-template-columns:44px 1fr 44px;gap:8px;align-items:center;margin-top:8px"><button type="button" class="secondary stepBtn" style="font-size:22px;padding:6px 0;color:var(--accent);background:#fff;border:1px solid var(--line)" data-target="dry" data-step="-1">−</button><input id="dry" type="range" min="1" max="5" value="3"><button type="button" class="secondary stepBtn" style="font-size:22px;padding:6px 0;color:var(--accent);background:#fff;border:1px solid var(--line)" data-target="dry" data-step="1">＋</button></div>
         </label>
       </div>
       <label>また飲みたい度
@@ -149,8 +156,8 @@
       </label>
     </div>
 
-    <div class="section">
-      <h3>④ 詳細</h3>
+    <details class="section" id="detailSection">
+      <summary style="font-size:16px;font-weight:800;cursor:pointer;color:var(--accent)">④ 詳細（必要なときだけ開く）</summary><div style="margin-top:10px">
       <label>銘柄名 *
         <input id="name" required placeholder="例：奥">
       </label>
@@ -172,8 +179,7 @@
       </label>
       <label>飲んだ日
         <input id="date" type="date">
-      </label>
-    </div>
+      </label></div></details>
 
     <div class="section">
       <h3>⑤ 感想</h3>
@@ -191,6 +197,36 @@
 <div id="lightbox" class="lightbox"><img id="lightboxImg" alt=""></div>
 
 <script>
+const APP_VERSION='1.6';
+const VERSION_KEY='sakelog_app_version';
+const currentVersion=localStorage.getItem(VERSION_KEY);
+if(currentVersion!==APP_VERSION){
+  localStorage.setItem(VERSION_KEY,APP_VERSION);
+  if(currentVersion!==null){
+    const u=new URL(location.href);
+    u.searchParams.set('_v',APP_VERSION+'-'+Date.now());
+    location.replace(u.toString());
+  }
+}
+
+
+async function checkForUpdate(){
+  try{
+    const freshUrl=new URL('index.html',location.href);
+    freshUrl.searchParams.set('_check',Date.now());
+    const response=await fetch(freshUrl.toString(),{cache:'no-store'});
+    const text=await response.text();
+    const match=text.match(/<meta name="app-version" content="([^"]+)"/);
+    if(match && match[1]!==APP_VERSION){
+      const next=new URL(location.href);
+      next.searchParams.set('_v',match[1]+'-'+Date.now());
+      location.replace(next.toString());
+    }
+  }catch(e){}
+}
+window.addEventListener('pageshow',checkForUpdate);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkForUpdate();});
+
 const KEY='sake_reviews_v1';
 let items=JSON.parse(localStorage.getItem(KEY)||'[]');
 let sortMode='new', filterMode='all';
@@ -295,6 +331,7 @@ function resetForm(){
   frontData='';backData='';
   ['frontPreview','backPreview'].forEach(id=>{$(id).src='';$(id).style.display='none';});
   $('deleteBtn').style.display='none';$('formTitle').textContent='日本酒を記録';
+  $('detailSection').open=false;
   ['sweet','fruity','aroma','dry'].forEach(id=>$(id+'Val').textContent=$(id).value);
   updateRatingPreview();
 }
@@ -311,7 +348,8 @@ window.editItem=id=>{
   frontData=x.frontPhoto||'';backData=x.backPhoto||'';
   fillPreview('frontPreview',frontData);fillPreview('backPreview',backData);
   ['sweet','fruity','aroma','dry'].forEach(k=>$(k+'Val').textContent=$(k).value);
-  $('deleteBtn').style.display='inline-block';$('formTitle').textContent='レビューを編集';$('editor').showModal();
+  $('deleteBtn').style.display='inline-block';$('formTitle').textContent='レビューを編集';
+  $('detailSection').open=true;$('editor').showModal();
 };
 
 function bindPhoto(inputId,previewId,setter){
@@ -348,6 +386,7 @@ $('form').addEventListener('submit',e=>{
 $('againLevel').addEventListener('change',updateRatingPreview);
 $('addBtn').onclick=()=>{resetForm();$('editor').showModal();};
 $('cancelBtn').onclick=()=>$('editor').close();
+$('closeTopBtn').onclick=()=>$('editor').close();
 $('deleteBtn').onclick=()=>{if(confirm('このレビューを削除しますか？')){items=items.filter(x=>x.id!==$('editId').value);save();render();$('editor').close();}};
 $('search').addEventListener('input',render);
 
@@ -363,7 +402,7 @@ $('backupBtn').onclick=()=>{
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sake-reviews-'+new Date().toISOString().slice(0,10)+'.json';a.click();
   URL.revokeObjectURL(a.href);
 };
-$('restoreBtn').onclick=()=>$('restoreFile').click();
+$('restoreBtnTop').onclick=()=>$('restoreFile').click();
 $('restoreFile').onchange=async e=>{
   try{
     const data=JSON.parse(await e.target.files[0].text());
