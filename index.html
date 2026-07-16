@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#7b1e3a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="酒ログ">
-  <title>酒ログ v1.3</title>
+  <title>酒ログ v1.4</title>
   <style>
     :root{
       --bg:#f7f3ee;--card:#fff;--ink:#2c2522;--muted:#7b706b;
@@ -68,7 +68,7 @@
 <body>
 <header>
   <div class="top">
-    <div><h1>🍶 酒ログ <small style="font-size:12px;color:#7b706b">v1.3</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
+    <div><h1>🍶 酒ログ <small style="font-size:12px;color:#7b706b">v1.4</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
     <button id="backupBtn" class="secondary">保存</button>
   </div>
 </header>
@@ -123,15 +123,7 @@
 
     <div class="section">
       <h3>③ 評価</h3>
-      <label>総合評価
-        <select id="rating">
-          <option value="5">★★★★★ かなり好き</option>
-          <option value="4">★★★★☆ 好き</option>
-          <option value="3" selected>★★★☆☆ 普通</option>
-          <option value="2">★★☆☆☆ あまり好みではない</option>
-          <option value="1">★☆☆☆☆ 苦手</option>
-        </select>
-      </label>
+      <div class="rangebox" style="margin-bottom:10px"><b>総合評価（自動計算）</b><div id="ratingPreview" class="stars">★★★☆☆（3.00）</div><div style="font-size:12px;color:var(--muted);margin-top:4px">甘さ・フルーティー・香り・キレ・また飲みたい度×2 の平均</div></div>
       <div class="ranges">
         <label class="rangebox">甘さ：<span id="sweetVal">3</span>/5
           <input id="sweet" type="range" min="1" max="5" value="3">
@@ -207,7 +199,29 @@ let frontData='', backData='';
 const $=id=>document.getElementById(id);
 const save=()=>localStorage.setItem(KEY,JSON.stringify(items));
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const stars=n=>'★'.repeat(Number(n)||0)+'☆'.repeat(5-(Number(n)||0));
+const stars=n=>{
+  const rounded=Math.max(0,Math.min(5,Math.round(Number(n)||0)));
+  return '★'.repeat(rounded)+'☆'.repeat(5-rounded);
+};
+const calcRating=x=>{
+  const sweet=Number(x.sweet||0);
+  const fruity=Number(x.fruity||0);
+  const aroma=Number(x.aroma||0);
+  const dry=Number(x.dry||0);
+  const again=Number(x.againLevel||0);
+  return Math.round(((sweet+fruity+aroma+dry+again*2)/6)*100)/100;
+};
+const formatRating=n=>Number(n||0).toFixed(2);
+const updateRatingPreview=()=>{
+  const value=calcRating({
+    sweet:$('sweet').value,
+    fruity:$('fruity').value,
+    aroma:$('aroma').value,
+    dry:$('dry').value,
+    againLevel:$('againLevel').value
+  });
+  $('ratingPreview').textContent=`${stars(value)}（${formatRating(value)}）`;
+};
 
 // 旧データを壊さず移行
 items=items.map(x=>({
@@ -215,7 +229,8 @@ items=items.map(x=>({
   frontPhoto:x.frontPhoto||x.photo||'',
   backPhoto:x.backPhoto||'',
   region:x.region||'',
-  againLevel:Number(x.againLevel)||(x.again===true?5:3)
+  againLevel:Number(x.againLevel)||(x.again===true?5:3),
+  rating:calcRating({...x,againLevel:Number(x.againLevel)||(x.again===true?5:3)})
 }));
 save();
 
@@ -236,13 +251,16 @@ function filtered(){
 function ranking(title,key){
   const list=[...items].sort((a,b)=>Number(b[key]||0)-Number(a[key]||0)).slice(0,3);
   if(!list.length)return '';
-  return `<div class="rank"><h2>${title}</h2><ol>${list.map(x=>`<li><b>${esc(x.name)}</b> — ${x[key]}/5</li>`).join('')}</ol></div>`;
+  return `<div class="rank"><h2>${title}</h2><ol>${list.map(x=>{
+    const value=key==='rating'?formatRating(calcRating(x)):x[key];
+    return `<li><b>${esc(x.name)}</b> — ${value}/5</li>`;
+  }).join('')}</ol></div>`;
 }
 
 function render(){
   const list=filtered();
   $('count').textContent=items.length;
-  $('avg').textContent=items.length?(items.reduce((s,x)=>s+Number(x.rating||0),0)/items.length).toFixed(1):'-';
+  $('avg').textContent=items.length?(items.reduce((s,x)=>s+calcRating(x),0)/items.length).toFixed(2):'-';
   $('againAvg').textContent=items.length?(items.reduce((s,x)=>s+Number(x.againLevel||0),0)/items.length).toFixed(1):'-';
 
   $('rankings').innerHTML=
@@ -257,7 +275,7 @@ function render(){
       ${photoHtml}
       <div class="name">${esc(x.name)}</div>
       <div class="brewery">${esc([x.brewery,x.region].filter(Boolean).join('・')||'酒蔵・地域未登録')}</div>
-      <div class="stars">${stars(x.rating)}</div>
+      <div class="stars">${stars(calcRating(x))}（${formatRating(calcRating(x))}）</div>
       <div class="tags">
         <span class="tag">甘さ ${x.sweet}/5</span>
         <span class="tag">フルーティー ${x.fruity}/5</span>
@@ -278,6 +296,7 @@ function resetForm(){
   ['frontPreview','backPreview'].forEach(id=>{$(id).src='';$(id).style.display='none';});
   $('deleteBtn').style.display='none';$('formTitle').textContent='日本酒を記録';
   ['sweet','fruity','aroma','dry'].forEach(id=>$(id+'Val').textContent=$(id).value);
+  updateRatingPreview();
 }
 
 function fillPreview(id,data){
@@ -287,8 +306,7 @@ function fillPreview(id,data){
 window.editItem=id=>{
   const x=items.find(i=>i.id===id);if(!x)return;
   $('editId').value=x.id;$('name').value=x.name||'';$('brewery').value=x.brewery||'';
-  $('region').value=x.region||'';$('date').value=x.date||'';$('rating').value=x.rating||3;
-  $('sweet').value=x.sweet||3;$('fruity').value=x.fruity||3;$('aroma').value=x.aroma||3;$('dry').value=x.dry||3;
+  $('region').value=x.region||'';$('date').value=x.date||'';  $('sweet').value=x.sweet||3;$('fruity').value=x.fruity||3;$('aroma').value=x.aroma||3;$('dry').value=x.dry||3;
   $('type').value=x.type||'不明';$('place').value=x.place||'';$('memo').value=x.memo||'';$('againLevel').value=x.againLevel||3;
   frontData=x.frontPhoto||'';backData=x.backPhoto||'';
   fillPreview('frontPreview',frontData);fillPreview('backPreview',backData);
@@ -317,7 +335,7 @@ $('form').addEventListener('submit',e=>{
   const old=items.find(x=>x.id===id);
   const data={
     id,name:$('name').value.trim(),brewery:$('brewery').value.trim(),region:$('region').value.trim(),
-    date:$('date').value,rating:+$('rating').value,sweet:+$('sweet').value,fruity:+$('fruity').value,
+    date:$('date').value,rating:calcRating({sweet:+$('sweet').value,fruity:+$('fruity').value,aroma:+$('aroma').value,dry:+$('dry').value,againLevel:+$('againLevel').value}),sweet:+$('sweet').value,fruity:+$('fruity').value,
     aroma:+$('aroma').value,dry:+$('dry').value,type:$('type').value,place:$('place').value.trim(),
     memo:$('memo').value.trim(),againLevel:+$('againLevel').value,frontPhoto:frontData,backPhoto:backData,
     created:old?.created||Date.now()
@@ -327,6 +345,7 @@ $('form').addEventListener('submit',e=>{
 });
 
 ['sweet','fruity','aroma','dry'].forEach(id=>$(id).addEventListener('input',()=>$(id+'Val').textContent=$(id).value));
+$('againLevel').addEventListener('change',updateRatingPreview);
 $('addBtn').onclick=()=>{resetForm();$('editor').showModal();};
 $('cancelBtn').onclick=()=>$('editor').close();
 $('deleteBtn').onclick=()=>{if(confirm('このレビューを削除しますか？')){items=items.filter(x=>x.id!==$('editId').value);save();render();$('editor').close();}};
@@ -349,7 +368,7 @@ $('restoreFile').onchange=async e=>{
   try{
     const data=JSON.parse(await e.target.files[0].text());
     if(!Array.isArray(data))throw new Error();
-    if(confirm(`${data.length}件のデータで現在の記録を置き換えますか？`)){items=data;save();location.reload();}
+    if(confirm(`${data.length}件のデータで現在の記録を置き換えますか？`)){items=data.map(x=>({...x,rating:calcRating(x)}));save();location.reload();}
   }catch{alert('読み込めないファイルです。');}
 };
 
