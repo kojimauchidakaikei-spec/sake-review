@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#7b1e3a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="酒ログ">
-  <title>酒ログ v1.6</title>
-  <meta name="app-version" content="1.6">
+  <title>酒ログ v1.7</title>
+  <meta name="app-version" content="1.7">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="apple-touch-icon" href="icon-180.png?v=16">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=16">
-  <link rel="manifest" href="manifest.webmanifest?v=16">
+  <link rel="apple-touch-icon" href="icon-180.png?v=17">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=17">
+  <link rel="manifest" href="manifest.webmanifest?v=17">
 
   <style>
     :root{
@@ -76,13 +76,13 @@
 <body>
 <header>
   <div class="top">
-    <div><h1 style="display:flex;align-items:center;gap:8px"><img src="icon-180.png?v=16" alt="" style="width:34px;height:34px;border-radius:9px">酒ログ <small style="font-size:12px;color:#7b706b">v1.6</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
+    <div><h1 style="display:flex;align-items:center;gap:8px"><img src="icon-180.png?v=17" alt="" style="width:34px;height:34px;border-radius:9px">酒ログ <small style="font-size:12px;color:#7b706b">v1.7</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
     <div style="display:flex;gap:6px;background:#fff;border:1px solid var(--line);padding:4px;border-radius:14px"><button id="backupBtn" class="secondary" style="background:transparent;color:var(--accent)">保存</button><button id="restoreBtnTop" class="secondary" style="background:transparent;color:var(--accent);border-left:1px solid var(--line);border-radius:0 10px 10px 0">復元</button></div>
   </div>
 </header>
 
 <main class="wrap">
-  <input id="search" class="search" placeholder="銘柄・酒蔵・店・感想を検索">
+  <input id="search" class="search" placeholder="銘柄・商品名・酒蔵・店・感想を検索">
   <div class="stats">
     <div class="stat"><b id="count">0</b><span>飲んだ本数</span></div>
     <div class="stat"><b id="avg">-</b><span>平均評価</span></div>
@@ -113,7 +113,7 @@
 
 <dialog id="editor">
   <form id="form" class="modal">
-    <div style="position:sticky;top:0;z-index:5;background:var(--bg);display:flex;justify-content:space-between;align-items:center;padding:2px 0 10px"><h2 id="formTitle" style="margin:0">日本酒を記録</h2><button type="button" id="closeTopBtn" class="secondary" aria-label="閉じる" style="font-size:24px;line-height:1;padding:8px 12px;background:#fff;color:var(--accent);border:1px solid var(--line);box-shadow:0 2px 8px rgba(20,45,75,.10)">×</button></div>
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg);display:flex;justify-content:space-between;align-items:center;padding:2px 0 10px"><h2 id="formTitle" style="margin:0">日本酒を記録</h2><button type="button" id="closeTopBtn" class="secondary" aria-label="閉じる" style="font-size:17px;line-height:1;width:36px;height:36px;padding:0;background:#fff;color:var(--accent);border:1px solid var(--line);box-shadow:0 2px 8px rgba(20,45,75,.10)">×</button></div>
     <input type="hidden" id="editId">
 
     <div class="section">
@@ -130,7 +130,7 @@
 
     <div class="section">
       <h3>③ 評価</h3>
-      <div class="rangebox" style="margin-bottom:10px"><b>総合評価（自動計算）</b><div id="ratingPreview" class="stars">★★★☆☆（3.00）</div><div style="font-size:12px;color:var(--muted);margin-top:4px">甘さ・フルーティー・香り・キレ・また飲みたい度×2 の平均</div></div>
+      <div class="rangebox" style="margin-bottom:10px"><b>総合評価</b><div id="ratingPreview" class="stars">★★★☆☆（3.00）</div><div style="font-size:12px;color:var(--muted);margin-top:4px">甘さ・フルーティー・香り・キレ・また飲みたい度×2 の平均</div></div>
       <div class="ranges">
         <label class="rangebox">甘さ：<span id="sweetVal">3</span>/5
           <div style="display:grid;grid-template-columns:44px 1fr 44px;gap:8px;align-items:center;margin-top:8px"><button type="button" class="secondary stepBtn" style="font-size:22px;padding:6px 0;color:var(--accent);background:#fff;border:1px solid var(--line)" data-target="sweet" data-step="-1">−</button><input id="sweet" type="range" min="1" max="5" value="3"><button type="button" class="secondary stepBtn" style="font-size:22px;padding:6px 0;color:var(--accent);background:#fff;border:1px solid var(--line)" data-target="sweet" data-step="1">＋</button></div>
@@ -157,9 +157,12 @@
     </div>
 
     <details class="section" id="detailSection">
-      <summary style="font-size:16px;font-weight:800;cursor:pointer;color:var(--accent)">④ 詳細（必要なときだけ開く）</summary><div style="margin-top:10px">
+      <summary style="font-size:16px;font-weight:800;cursor:pointer;color:var(--accent)">④ 詳細</summary><div style="margin-top:10px">
       <label>銘柄名 *
-        <input id="name" required placeholder="例：奥">
+        <input id="name" required placeholder="例：酔鯨">
+      </label>
+      <label>商品名・シリーズ
+        <input id="series" placeholder="例：夏純米、吟麗">
       </label>
       <label>酒蔵
         <input id="brewery" placeholder="例：山﨑合資会社">
@@ -197,7 +200,7 @@
 <div id="lightbox" class="lightbox"><img id="lightboxImg" alt=""></div>
 
 <script>
-const APP_VERSION='1.6';
+const APP_VERSION='1.7';
 const VERSION_KEY='sakelog_app_version';
 const currentVersion=localStorage.getItem(VERSION_KEY);
 if(currentVersion!==APP_VERSION){
@@ -265,6 +268,7 @@ items=items.map(x=>({
   frontPhoto:x.frontPhoto||x.photo||'',
   backPhoto:x.backPhoto||'',
   region:x.region||'',
+  series:x.series||'',
   againLevel:Number(x.againLevel)||(x.again===true?5:3),
   rating:calcRating({...x,againLevel:Number(x.againLevel)||(x.again===true?5:3)})
 }));
@@ -272,7 +276,7 @@ save();
 
 function filtered(){
   const q=$('search').value.trim().toLowerCase();
-  let list=items.filter(x=>[x.name,x.brewery,x.region,x.place,x.memo,x.type].join(' ').toLowerCase().includes(q));
+  let list=items.filter(x=>[x.name,x.series,x.brewery,x.region,x.place,x.memo,x.type].join(' ').toLowerCase().includes(q));
   if(filterMode==='again4') list=list.filter(x=>Number(x.againLevel)>=4);
   if(filterMode==='fruity4') list=list.filter(x=>Number(x.fruity)>=4);
   if(filterMode==='sweet4') list=list.filter(x=>Number(x.sweet)>=4);
@@ -289,7 +293,7 @@ function ranking(title,key){
   if(!list.length)return '';
   return `<div class="rank"><h2>${title}</h2><ol>${list.map(x=>{
     const value=key==='rating'?formatRating(calcRating(x)):x[key];
-    return `<li><b>${esc(x.name)}</b> — ${value}/5</li>`;
+    return `<li><b>${esc([x.name,x.series].filter(Boolean).join(' '))}</b> — ${value}/5</li>`;
   }).join('')}</ol></div>`;
 }
 
@@ -310,6 +314,7 @@ function render(){
     return `<article class="card" onclick="editItem('${x.id}')">
       ${photoHtml}
       <div class="name">${esc(x.name)}</div>
+      ${x.series?`<div style="font-size:17px;font-weight:800;color:var(--accent);margin-top:2px">${esc(x.series)}</div>`:''}
       <div class="brewery">${esc([x.brewery,x.region].filter(Boolean).join('・')||'酒蔵・地域未登録')}</div>
       <div class="stars">${stars(calcRating(x))}（${formatRating(calcRating(x))}）</div>
       <div class="tags">
@@ -342,7 +347,7 @@ function fillPreview(id,data){
 
 window.editItem=id=>{
   const x=items.find(i=>i.id===id);if(!x)return;
-  $('editId').value=x.id;$('name').value=x.name||'';$('brewery').value=x.brewery||'';
+  $('editId').value=x.id;$('name').value=x.name||'';$('series').value=x.series||'';$('brewery').value=x.brewery||'';
   $('region').value=x.region||'';$('date').value=x.date||'';  $('sweet').value=x.sweet||3;$('fruity').value=x.fruity||3;$('aroma').value=x.aroma||3;$('dry').value=x.dry||3;
   $('type').value=x.type||'不明';$('place').value=x.place||'';$('memo').value=x.memo||'';$('againLevel').value=x.againLevel||3;
   frontData=x.frontPhoto||'';backData=x.backPhoto||'';
@@ -372,7 +377,7 @@ $('form').addEventListener('submit',e=>{
   const id=$('editId').value||crypto.randomUUID();
   const old=items.find(x=>x.id===id);
   const data={
-    id,name:$('name').value.trim(),brewery:$('brewery').value.trim(),region:$('region').value.trim(),
+    id,name:$('name').value.trim(),series:$('series').value.trim(),brewery:$('brewery').value.trim(),region:$('region').value.trim(),
     date:$('date').value,rating:calcRating({sweet:+$('sweet').value,fruity:+$('fruity').value,aroma:+$('aroma').value,dry:+$('dry').value,againLevel:+$('againLevel').value}),sweet:+$('sweet').value,fruity:+$('fruity').value,
     aroma:+$('aroma').value,dry:+$('dry').value,type:$('type').value,place:$('place').value.trim(),
     memo:$('memo').value.trim(),againLevel:+$('againLevel').value,frontPhoto:frontData,backPhoto:backData,
