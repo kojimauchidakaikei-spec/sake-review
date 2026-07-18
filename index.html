@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#7b1e3a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="酒ログ">
-  <title>酒ログ v1.7.1</title>
-  <meta name="app-version" content="1.7.1">
+  <title>酒ログ v1.7.2</title>
+  <meta name="app-version" content="1.7.2">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -76,7 +76,7 @@
 <body>
 <header>
   <div class="top">
-    <div><h1 style="display:flex;align-items:center;gap:8px"><img src="icon-180.png?v=17" alt="" style="width:34px;height:34px;border-radius:9px">酒ログ <small style="font-size:12px;color:#7b706b">v1.7.1</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
+    <div><h1 style="display:flex;align-items:center;gap:8px"><img src="icon-180.png?v=17" alt="" style="width:34px;height:34px;border-radius:9px">酒ログ <small style="font-size:12px;color:#7b706b">v1.7.2</small></h1><div class="sub">飲んだ酒を、次に選ぶための記録へ</div></div>
     <div style="display:flex;gap:6px;background:#fff;border:1px solid var(--line);padding:4px;border-radius:14px"><button id="backupBtn" class="secondary" style="background:transparent;color:var(--accent)">保存</button><button id="restoreBtnTop" class="secondary" style="background:transparent;color:var(--accent);border-left:1px solid var(--line);border-radius:0 10px 10px 0">復元</button></div>
   </div>
 </header>
@@ -159,7 +159,7 @@
     <details class="section" id="detailSection">
       <summary style="font-size:16px;font-weight:800;cursor:pointer;color:var(--accent)">④ 詳細</summary><div style="margin-top:10px">
       <label>銘柄名 *
-        <input id="name" required placeholder="例：酔鯨">
+        <input id="name" placeholder="例：酔鯨">
       </label>
       <label>商品名・シリーズ
         <input id="series" placeholder="例：夏純米、吟麗">
@@ -200,7 +200,7 @@
 <div id="lightbox" class="lightbox"><img id="lightboxImg" alt=""></div>
 
 <script>
-const APP_VERSION='1.7.1';
+const APP_VERSION='1.7.2';
 const VERSION_KEY='sakelog_app_version';
 const currentVersion=localStorage.getItem(VERSION_KEY);
 if(currentVersion!==APP_VERSION){
@@ -376,8 +376,9 @@ $('form').addEventListener('submit',e=>{
   e.preventDefault();
   const id=$('editId').value||crypto.randomUUID();
   const old=items.find(x=>x.id===id);
+  const displayName=$('name').value.trim()||'名称未入力';
   const data={
-    id,name:$('name').value.trim(),series:$('series').value.trim(),brewery:$('brewery').value.trim(),region:$('region').value.trim(),
+    id,name:displayName,series:$('series').value.trim(),brewery:$('brewery').value.trim(),region:$('region').value.trim(),
     date:$('date').value,rating:calcRating({sweet:+$('sweet').value,fruity:+$('fruity').value,aroma:+$('aroma').value,dry:+$('dry').value,againLevel:+$('againLevel').value}),sweet:+$('sweet').value,fruity:+$('fruity').value,
     aroma:+$('aroma').value,dry:+$('dry').value,type:$('type').value,place:$('place').value.trim(),
     memo:$('memo').value.trim(),againLevel:+$('againLevel').value,frontPhoto:frontData,backPhoto:backData,
